@@ -12,6 +12,11 @@ Uses the modules defined in the script "branching_rules.py".
 
 @author: Mehmet Can Ucar
 """
+# Change the path to the script directory:
+import os
+cwd = os.path.dirname(os.path.realpath(__file__))
+os.chdir(cwd)
+
 import numpy as np
 import branching_rules as br
 
@@ -20,6 +25,7 @@ import branching_rules as br
 # we first set the elementary step size to be equal to 1:
 lstep = 1
 
+# We define the class of a branched network:
 class Tissue:
     # these attributes will be defined at the first instance of the class (i.e. whenever we generate an object for it)
     def __init__(self, prob, tip, angle, min_angle = np.pi/10, rad_avoid = 10*lstep, rad_termin = 1.5*lstep):
@@ -109,7 +115,7 @@ class Tissue:
         return '[Tissue Tips: %s, Angles: %s]' % (self.tip, self.angle)
     
 
-#%%
+#%% Next we define the rules of the simulation loop
 
 def simulation_loop(prob,fc,fs,fint,tmax):
     """

@@ -180,7 +180,7 @@ def branching(prob, node, angle, coords, coords_other, min_branch, rad_termin, l
                 tip_distances = distance(coords_combine,node[j+skip-skipp])
                     
                 # Additional annihilation condition due to stochastic "retraction" events:
-                retraction_rate = 10
+                retraction_rate = 0.1
                 retraction_prob = 1-np.exp(-retraction_rate)
                 if len(np.where(tip_distances<rad_termin)[0])>0:
                     print('senses')

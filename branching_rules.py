@@ -41,7 +41,7 @@ def distance(coord,tip):
 # putting the annihilation here reduces the simulation time drastically!
 # but the annihilation is for now only implemented after elongation steps, so it still needs to be updated for branching!
 
-def branching(prob, node, angle, coords, coords_other, min_branch, rad_termin, lstep=1, xmin=0, xmax = 200, ymin=0, ymax=200):
+def branching(prob, node, angle, coords, coords_other, min_branch, rad_termin, xmax, ymax, lstep=1, xmin=0, ymin=0):
     """
     This function incorporates the rules for branching and elongation, 
     as well as annihilation of generated tips.
@@ -108,8 +108,8 @@ def branching(prob, node, angle, coords, coords_other, min_branch, rad_termin, l
         # if subtraction is non-positive, then we branch:
         if prob_diff[j]<=0:
             # determine two random branching angles between pi/10 and pi/2 (note that we can change these min/max angles!):
-            ang_branch1 = np.random.uniform(min_branch*3,np.pi/2)
-            ang_branch2 = np.random.uniform(min_branch*3,np.pi/2)   
+            ang_branch1 = np.random.uniform(min_branch*2,np.pi/2)
+            ang_branch2 = np.random.uniform(min_branch*2,np.pi/2)   
             # add a new branch changing the coordinates with the random angle ang_branch1: 
             angle = np.insert(angle,j+skip-skipp+1,angle[j+skip-skipp]+ang_branch1)
             node = np.insert(node,j+skip-skipp+1,[node[j+skip-skipp][0]+lstep*np.cos(angle[j+skip-skipp+1]), \
@@ -124,8 +124,9 @@ def branching(prob, node, angle, coords, coords_other, min_branch, rad_termin, l
             parent_indx = np.where(coords[:,-1]==node[j+skip-skipp,-2])[0]
             
             # coordinates after excluding the indices belonging to parent:
-            # only take the last 2 time points from the parent coordinates to prevent immature annihilation:
-            excluded_coords = np.delete(coords,parent_indx[-2:],0)
+            # only take the last N time points from the parent coordinates to prevent immature annihilation:
+            N_last = 2
+            excluded_coords = np.delete(coords,parent_indx[-N_last:],0)
             # calculate the distances between the new tip position and remaining coordinates of the network:
             if len(excluded_coords)>0:
                 # here we can set if the network "sees" the neighboring network or not:
@@ -148,7 +149,7 @@ def branching(prob, node, angle, coords, coords_other, min_branch, rad_termin, l
         else:
             # determine a random elongation angle
             rd_elong = np.random.uniform(-1,1)
-            ang_elong = rd_elong*min_branch
+            ang_elong = rd_elong*min_branch/2
             # change the angle and coordinates of active tips
             angle[j+skip-skipp] += ang_elong
             node[j+skip-skipp] = [node[j+skip-skipp][0]+lstep*np.cos(angle[j+skip-skipp]),\
@@ -170,7 +171,6 @@ def branching(prob, node, angle, coords, coords_other, min_branch, rad_termin, l
                 omit_indices = np.concatenate(([parent_indx[-1]],self_indx))
             else:
                 omit_indices = self_indx
-            
             # coordinates after excluding the indices belonging to self, sibling and parent:
             excluded_coords = np.delete(coords,omit_indices,0)
             # calculate the distances between the new tip position and remaining coordinates of the network:
@@ -180,10 +180,10 @@ def branching(prob, node, angle, coords, coords_other, min_branch, rad_termin, l
                 tip_distances = distance(coords_combine,node[j+skip-skipp])
                     
                 # Additional annihilation condition due to stochastic "retraction" events:
-                retraction_rate = 0.1
+                retraction_rate = 0
                 retraction_prob = 1-np.exp(-retraction_rate)
                 if len(np.where(tip_distances<rad_termin)[0])>0:
-                    print('senses')
+                  #  print('senses')
 
                     if np.random.uniform(0,1)<retraction_prob:
                                                 
@@ -200,11 +200,12 @@ def branching(prob, node, angle, coords, coords_other, min_branch, rad_termin, l
                             node[j+skip-skipp] = [coords[previous_indx][0],coords[previous_indx][1],coords[previous_indx][2],coords[previous_indx][3]]  
 
                     else:
-                        print('died')
+                   #     print('died')
 
                         node = np.delete(node,j+skip-skipp,0)
                         angle = np.delete(angle,j+skip-skipp,0)
-
+                        
+                        # Delete half-length of all coordinates from the corresponding branch
 
                         skipp += 1
                     
@@ -354,6 +355,7 @@ def guidance_avoidance_interaction(node, angle, coord_last, coord_until, coord_o
             tip[0] += pol_neighbor[0]
             tip[1] += pol_neighbor[1]
 
+            
             # here we need to loop again over the displaced active tips to preserve the elementary branch length!
             for k in range(len(coord_last)):
                 # filter only displaced nodes
